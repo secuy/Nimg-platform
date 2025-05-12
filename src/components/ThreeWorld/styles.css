@@ -1,0 +1,245 @@
+.canvas-container {
+  display: flex;
+  gap: 20px;
+  padding: 20px;
+}
+
+.canvas-section {
+  flex: 1;
+  position: relative;         /* 如果以后你要用绝对定位的话，以此为参照 */
+  display: flex;              /* 正确开启 flex 布局 */
+  flex-direction: column;
+  gap: 20px;
+}
+
+.three-container {
+  width: 99.5%;
+  height: 500px;
+  border: 1px solid #ccc;
+}
+
+.control-panel {
+  display: flex;            /* 横向排列子面板 */
+  gap: 20px;                /* 面板之间的水平间距 */
+  align-items: stretch;      /* 垂直方向拉伸对齐，使短板也撑满高 */
+  padding: 15px;
+  background: #f5f5f5;
+  border-radius: 8px;
+}
+
+.view-controls {
+  display: flex;
+  width: 30%;
+  min-width: 0;             /* 防止内容撑破布局 */
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.file-upload {
+  display: flex;
+  width: 70%;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.inputFileLabel {
+  width: 250px;
+}
+
+.upload-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 80px;
+}
+
+.upload-group .title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.upload-group label {
+  width: 150px;
+  align-items: left;
+  text-align: left;
+}
+
+.upload-group .select-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.upload-group .file-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.upload-group select {
+  height: 30px;
+  width: 500px;
+  padding: 5px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background-color: white;
+}
+
+.control-group {
+  display: flex;
+  gap: 10px;
+}
+
+.control-group button {
+  padding: 8px 10px;
+  background: #2196F3;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.control-group button.active {
+  /* background: #1976D2; */
+  background-color: #4CAF50;
+  color: white;
+  border-color: #45a049;
+}
+
+.control-group button:disabled {
+  background-color: #808080;
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+
+.opacity-control {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.opacity-control input[type="range"] {
+  flex: 1;
+}
+
+.vertex-info {
+  margin-top: 10px;
+  padding: 15px;
+  background: #fff;
+  border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.vertex-info h3 {
+  margin: 0 0 10px 0;
+  color: #333;
+}
+
+.vertex-info p {
+  margin: 5px 0;
+  color: #666;
+}
+
+/* .three-world {
+  width: 100%;
+  height: 100vh;
+  position: relative;
+}
+
+#three-container {
+  width: 100%;
+  height: calc(100% - 150px);
+  background-color: #f0f0f0;
+}
+
+.file-upload {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: rgba(255, 255, 255, 0.8);
+  padding: 10px;
+  border-radius: 5px;
+}
+
+.upload-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.upload-group label {
+  min-width: 120px;
+}
+
+.controls {
+  position: absolute;
+  bottom: 60px;
+  left: 20px;
+  background: rgba(255, 255, 255, 0.8);
+  padding: 10px;
+  border-radius: 5px;
+  z-index: 1000;
+  max-width: 300px;
+}
+
+.control-group {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.opacity-control {
+  margin-top: 10px;
+}
+
+.vertex-info {
+  margin-top: 15px;
+  padding-top: 10px;
+  border-top: 1px solid #ccc;
+}
+
+.vertex-info h3 {
+  margin: 0 0 10px 0;
+  font-size: 16px;
+}
+
+.vertex-info p {
+  margin: 5px 0;
+  font-size: 14px;
+}
+
+button {
+  padding: 5px 10px;
+  margin-right: 10px;
+  cursor: pointer;
+  border: 1px solid #ccc;
+  background-color: #f8f8f8;
+  border-radius: 3px;
+}
+
+button.active {
+  background-color: #4CAF50;
+  color: white;
+  border-color: #45a049;
+}
+
+.upload-group button {
+  margin-left: 10px;
+  padding: 5px 10px;
+  cursor: pointer;
+}
+
+.upload-group button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}  */
