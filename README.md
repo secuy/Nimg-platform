@@ -1,5 +1,8 @@
 # Nimg_Analyse_Platform
 
+## Introcution
+This is Nimg platform Web project source code.
+
 ## Project setup
 ```
 npm install
