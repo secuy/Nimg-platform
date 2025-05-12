@@ -165,11 +165,11 @@
 
 <script>
 import { ref, reactive, nextTick, onMounted, onBeforeUnmount } from 'vue';
-import { useThreeWorld } from './ThreeWorld';
+import { useCrossSpecies } from './CrossSpecies';
 import './styles.css';
 
 export default {
-  name: 'ThreeWorld',
+  name: 'CrossSpecies',
   props: {
     msg: String
   },
@@ -182,8 +182,8 @@ export default {
       right: null   // 占位，稍后赋值
     });
 
-    const leftWorld = useThreeWorld(threeContainerLeft, sharedState, 'left');
-    const rightWorld = useThreeWorld(threeContainerRight, sharedState, 'right');
+    const leftWorld = useCrossSpecies(threeContainerLeft, sharedState, 'left');
+    const rightWorld = useCrossSpecies(threeContainerRight, sharedState, 'right');
 
     // 添加下拉框的响应式数据
     const selectedSurfLeft = ref('');

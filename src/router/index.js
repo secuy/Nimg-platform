@@ -1,15 +1,15 @@
 import Vue from 'vue'
 import VueRouter from 'vue-router'
-import ThreeWorld from '../components/ThreeWorld.vue'
+import CrossSpecies from '../components/CrossSpecies/index.vue'
 import FiberVis from '../components/FiberVis/FiberVis.vue'
 
 Vue.use(VueRouter)
 
 const routes = [
   {
-    path: '/',
-    name: 'ThreeWorld',
-    component: ThreeWorld
+    path: '/cross-species',
+    name: 'CrossSpecies',
+    component: CrossSpecies
   },
   {
     path: '/fibervis',
@@ -20,7 +20,7 @@ const routes = [
 
 const router = new VueRouter({
   mode: 'history',
-  base: process.env.BASE_URL,
+  base: process.env.BASE_URL, // 
   routes
 })
 

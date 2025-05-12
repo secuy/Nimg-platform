@@ -2,7 +2,7 @@
   <div id="app">
     <div class="nav-container">
       <nav>
-        <router-link to="/">ThreeWorld</router-link> |
+        <router-link to="/cross-species">CrossSpecies</router-link> |
         <router-link to="/fibervis">FiberVis</router-link>
       </nav>
     </div>

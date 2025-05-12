@@ -1,4 +1,4 @@
-# cross_species_platform
+# Nimg_Analyse_Platform
 
 ## Project setup
 ```

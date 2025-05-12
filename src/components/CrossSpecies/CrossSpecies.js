@@ -7,7 +7,7 @@ import { generateColors, updateVertexColors } from '../../utils/colorManager';
 import { createCamera, createControls, adjustCameraToObject } from '../../utils/cameraManager';
 import { parseTCK } from '../../utils/tckParser';
 
-export function useThreeWorld(containerRef, sharedState, side) {
+export function useCrossSpecies(containerRef, sharedState, side) {
   const opacity = ref(1);
   const hasSurface = ref(false);
   const hasLabels = ref(false);
