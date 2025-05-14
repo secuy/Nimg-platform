@@ -282,7 +282,8 @@ export function useCrossSpecies(containerRef, sharedState, side) {
    */
   const loadGIFTIFileFromServer = async (filename) => {
     try {
-      const response = await fetch(`/cross-species/surfaces/${filename}`);
+      const baseUrl = process.env.BASE_URL;
+      const response = await fetch(`${baseUrl}surfaces/${filename}`);
       if (!response.ok) {
         throw new Error('Failed to load surface file');
       }
@@ -336,7 +337,8 @@ export function useCrossSpecies(containerRef, sharedState, side) {
    */
   const loadLabelGIFTIFileFromServer = async (filename) => {
     try {
-      const response = await fetch(`/cross-species/cross-species_parcellation/${filename}`);
+      const baseUrl = process.env.BASE_URL;
+      const response = await fetch(`${baseUrl}cross-species_parcellation/${filename}`);
       if (!response.ok) {
         throw new Error('Failed to load label file');
       }
@@ -377,7 +379,8 @@ export function useCrossSpecies(containerRef, sharedState, side) {
    */
   const loadTCKFileFromServer = async (filename) => {
     try {
-      const response = await fetch(`/cross-species/tracks/${filename}`);
+      const baseUrl = process.env.BASE_URL;
+      const response = await fetch(`${baseUrl}tck/${filename}`);
       if (!response.ok) {
         throw new Error('Failed to load TCK file');
       }
@@ -624,8 +627,9 @@ export function useCrossSpecies(containerRef, sharedState, side) {
 
   const fetchFilesFromPublic = async (folder, list_name) => {
     try {
+      const baseUrl = process.env.BASE_URL;
       // 在 public 下，你有一个列表文件（可以是 JSON 格式）存放着文件名
-      const response = await fetch(`/cross-species/${folder}/${list_name}`);
+      const response = await fetch(`${baseUrl}${folder}/${list_name}`);
       
       if (!response.ok) {
         throw new Error('Failed to load file list');
