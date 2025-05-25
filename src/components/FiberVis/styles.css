@@ -1,3 +1,135 @@
-.fiber-vis {
-  padding: 20px;
+body {
+  background: #181818;
+  color: #ddd;
+  margin: 0;
+  font-family: 'Inter', Arial, sans-serif;
+}
+
+#container {
+  display: flex;
+  height: 100vh;
+}
+
+#sidebar {
+  width: 340px;
+  background: #222;
+  box-shadow: 3px 0 8px #000a;
+  display: flex;
+  flex-direction: column;
+  z-index: 2;
+}
+
+#sidebar-header {
+  padding: 16px 14px 8px 14px;
+  border-bottom: 1px solid #333;
+}
+
+#sidebar-header-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+#sidebar-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px 10px 10px 14px;
+}
+
+#tract-list {
+  margin-bottom: 14px;
+}
+
+#tract-list div {
+  cursor: pointer;
+  padding: 2px 7px;
+  border-radius: 2px;
+  margin-bottom: 2px;
+  font-size: 1em;
+}
+
+#tract-list div.selected {
+  background: #e5ffb3;
+  color: #222;
+}
+
+#tract-list.hidden {
+  display: none;
+}
+
+#tract-details {
+  margin-top: 10px;
+  font-size: 0.96em;
+}
+
+#fold-btn {
+  margin-left: auto;
+  font-size: 0.95em;
+  background: #333;
+  color: #fff;
+  border: none;
+  padding: 4px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+#layer-panel {
+  margin-bottom: 10px;
+  background: #181818;
+  border-radius: 5px;
+  padding: 4px 0;
+}
+
+.layer-row {
+  padding: 2px 6px;
+  cursor: pointer;
+  border-radius: 3px;
+  margin-bottom: 2px;
+  transition: background 0.15s;
+  font-size: 1em;
+  display: flex;
+  align-items: center;
+}
+
+.layer-row.selected {
+  background: #393;
+  color: #fff;
+}
+
+.layer-row button {
+  margin-left: 8px;
+  background: #444;
+  color: #fff;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 0.96em;
+  padding: 2px 7px;
+}
+
+.layer-row button:hover {
+  background: #a33;
+}
+
+.layer-row input[type="checkbox"] {
+  accent-color: #37f;
+  margin-left: 8px;
+}
+
+#tract-slider-container,
+#tract-count-container {
+  margin-bottom: 10px;
+}
+
+#tract-count-input {
+  width: 70px;
+}
+
+#three-canvas {
+  flex: 1 1 0%;
+  width: 100%;
+  height: 100vh;
+  outline: none;
+  background: #181818;
+  display: block;
 }
