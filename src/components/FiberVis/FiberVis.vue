@@ -12,14 +12,15 @@
             </select>
           </label>
         </div>
-        <div ref="tractSliderContainer" style="margin-bottom:10px;">
+        <div ref="tractSliderContainer" style="margin-bottom:10px;" v-show="controlMode === 'ratio'">
           <label>Render tracts: <span ref="tractSliderValue">{{ Math.round(currentRatio * 100) }}</span>%</label>
           <input type="range" ref="tractSlider" min="1" max="100" v-model="sliderValue" @input="onSliderInput" />
         </div>
-        <div ref="tractCountContainer" style="margin-bottom:10px; display:none;">
+        <div ref="tractCountContainer" style="margin-bottom:10px;" v-show="controlMode === 'count'">
           <label>Render tracts: </label>
-          <input type="number" ref="tractCountInput" min="1" v-model="currentCount" @input="onCountInput"
-            style="width:70px;" />
+          <input type="number" ref="tractCountInput" :min="1" :max="maxCount" :value="currentCount"
+            @input="onCountInput" style="width:80px;" />
+          <span style="color:#888;">/ {{ maxCount }}</span>
         </div>
         <div id="sidebar-header-row">
           <b>Tracts</b>
@@ -39,10 +40,9 @@
 </template>
 
 <script setup>
-import { ref, onMounted, nextTick } from 'vue';
+import { ref, onMounted, nextTick, watch } from 'vue';
 import { initElements } from './ui/elements.js';
 import { loadTractList, clearTractList, setFolded, setupListUI } from './ui/list.js';
-// import { showTractDetails } from './ui/details.js';
 import { clearLayerTractLines, hideTractLines, showTractLines } from './three/tracts.js';
 import { animate } from './three/renderLoop.js';
 import { readTCK } from './utils/tckparser.js';
@@ -70,6 +70,8 @@ const currentRatio = ref(0.1);
 const currentCount = ref(1);
 const sliderValue = ref(10);
 
+const maxCount = ref(1); // 新增：当前layer最大tract数
+
 // 颜色循环
 const COLORS = [
   0x00ffe5, 0xffe600, 0xff00bf, 0x009aff, 0xff7433, 0x8eeb34, 0xbf34eb
@@ -84,9 +86,14 @@ function updateSliderLabel() {
     tractSliderValue.value.textContent = Math.round(currentRatio.value * 100);
 }
 function updateCountInputMax(layer) {
-  if (tractCountInput.value)
-    tractCountInput.value.max = layer ? layer.tracts.length : 1;
+  // 更新 maxCount 及输入框最大值
+  maxCount.value = layer ? layer.tracts.length : 1;
+  if (tractCountInput.value) {
+    tractCountInput.value.max = maxCount.value;
+    tractCountInput.value.min = 1;
+  }
 }
+
 function renderLayerPanel() {
   if (!layerPanel.value) return;
   layerPanel.value.innerHTML = '';
@@ -141,22 +148,27 @@ function updateLayerVisibility(idx) {
     hideTractLines(idx);
   }
 }
+
 function selectLayer(idx) {
   if (selectedLayerIndex === idx) return;
   selectedLayerIndex = idx;
   renderLayerPanel();
   const layer = layers[idx];
   updateCountInputMax(layer);
-  if (!tractCountInput.value.value || isNaN(+tractCountInput.value.value)) {
-    currentCount.value = 1;
-    tractCountInput.value.value = 1;
-  } else {
-    currentCount.value = Math.max(1, Math.min(parseInt(tractCountInput.value.value, 10), layer.tracts.length));
-    tractCountInput.value.value = currentCount.value;
-  }
+
+  // 恢复该 layer 上次的 ratio/count
+  currentRatio.value = typeof layer.ratio === 'number' ? layer.ratio : 0.1;
+  currentCount.value = typeof layer.count === 'number' ? layer.count : 1;
+  // 同步 sliderValue
+  sliderValue.value = Math.round(currentRatio.value * 100);
+
+  // 确保输入框显示最新 currentCount
+  if (tractCountInput.value) tractCountInput.value.value = currentCount.value;
+
   renderTractsByControl();
   setFolded(true); // Always fold by default
 }
+
 function deleteLayer(idx) {
   clearLayerTractLines(idx);
   layers.splice(idx, 1);
@@ -172,6 +184,7 @@ function deleteLayer(idx) {
     clearTractList();
   }
 }
+
 function onTCKFileChange(e) {
   if (!window._fibervis_three_ready) {
     alert('3D 视窗初始化中，请稍后再试！');
@@ -205,35 +218,38 @@ function onTCKFileChange(e) {
     if (tckFile.value) tckFile.value.value = '';
   })();
 }
+
 function onControlModeChange() {
-  if (!tractSliderContainer.value || !tractCountContainer.value) return;
-  if (controlMode.value === 'ratio') {
-    tractSliderContainer.value.style.display = '';
-    tractCountContainer.value.style.display = 'none';
-  } else {
-    tractSliderContainer.value.style.display = 'none';
-    tractCountContainer.value.style.display = '';
-  }
   const layer = layers[selectedLayerIndex];
   updateCountInputMax(layer);
   renderTractsByControl();
 }
+
 function onSliderInput() {
   currentRatio.value = sliderValue.value / 100;
+  if (layers[selectedLayerIndex]) layers[selectedLayerIndex].ratio = currentRatio.value;
   updateSliderLabel();
   if (controlMode.value === 'ratio') {
     renderTractsByControl();
   }
 }
-function onCountInput() {
-  currentCount.value = Math.max(1, parseInt(tractCountInput.value.value, 10) || 1);
+function onCountInput(e) {
+  // 实时校正输入
+  let val = parseInt(e.target.value, 10) || 1;
+  val = Math.max(1, Math.min(val, maxCount.value));
+  currentCount.value = val;
+  if (layers[selectedLayerIndex]) layers[selectedLayerIndex].count = val;
+  // 保证输入框数值合法
+  if (tractCountInput.value) tractCountInput.value.value = val;
   if (controlMode.value === 'count') {
     renderTractsByControl();
   }
 }
+
 function onFoldBtnClick() {
   setFolded(!foldBtn.value.classList.contains('folded'));
 }
+
 function renderTractsByControl() {
   if (selectedLayerIndex < 0) {
     clearTractList();
@@ -247,6 +263,12 @@ function renderTractsByControl() {
     loadTractList(layer.tracts, undefined, currentCount.value, layer.color, selectedLayerIndex);
   }
 }
+
+// 当切换 layer、ratio/count、tract 数量上限变动时，动态限制 currentCount
+watch(maxCount, (val) => {
+  if (currentCount.value > val) currentCount.value = val;
+  if (tractCountInput.value) tractCountInput.value.value = currentCount.value;
+})
 
 onMounted(async () => {
   // 初始化所有依赖的 dom 元素到 ui/elements.js
@@ -273,8 +295,6 @@ onMounted(async () => {
   });
   // 默认 UI 状态
   updateSliderLabel();
-  if (tractSliderContainer.value) tractSliderContainer.value.style.display = '';
-  if (tractCountContainer.value) tractCountContainer.value.style.display = 'none';
   setFolded(true);
   // Three.js 场景初始化
   await nextTick();
