@@ -16,6 +16,9 @@
                 {{ surfaceCheckTagLeft ? '取消' : '皮层对齐' }}
               </button>
             </div>
+            <div class="control-group">
+              <button @click="showCorrespondingFibersLeft" :disabled="!surfaceCheckTagLeft" :class="{ active: isShowingFibersLeft }">皮层对应纤维</button>
+            </div>
             <div class="opacity-control">
               <label>皮层透明度</label>
               <input type="range" v-model="opacityLeft" min="0" max="1" step="0.01" @input="updateOpacityLeft">
@@ -94,6 +97,9 @@
               <button @click="surfaceCheckRight" :disabled="!(hasSurfaceRight && hasLabelsRight)" :class="{ active: surfaceCheckTagRight }">
                 {{ surfaceCheckTagRight ? '取消' : '皮层对齐' }}
               </button>
+            </div>
+            <div class="control-group">
+              <button @click="showCorrespondingFibersRight" :disabled="!surfaceCheckTagRight" :class="{ active: isShowingFibersRight }">皮层对应纤维</button>
             </div>
             <div class="opacity-control">
               <label>皮层透明度</label>
@@ -268,6 +274,7 @@ export default {
       viewModeLeft: leftWorld.viewMode,
       surfaceCheckTagLeft: leftWorld.surfaceCheckTag,
       vertexInfoLeft: leftWorld.vertexInfo,
+      isShowingFibersLeft: leftWorld.isShowingFibers,
       
       handleSurfaceUploadLeft: leftWorld.handleSurfaceUpload,
       handleLabelUploadLeft: leftWorld.handleLabelUpload,
@@ -279,6 +286,7 @@ export default {
       updateOpacityLeft: leftWorld.updateOpacity,
       toggleViewModeLeft: leftWorld.toggleViewMode,
       surfaceCheckLeft: leftWorld.surfaceCheck,
+      showCorrespondingFibersLeft: leftWorld.showCorrespondingFibers,
       // 右侧画布
       opacityRight: rightWorld.opacity,
       hasSurfaceRight: rightWorld.hasSurface,
@@ -290,6 +298,7 @@ export default {
       viewModeRight: rightWorld.viewMode,
       surfaceCheckTagRight: rightWorld.surfaceCheckTag,
       vertexInfoRight: rightWorld.vertexInfo,
+      isShowingFibersRight: rightWorld.isShowingFibers,
       handleSurfaceUploadRight: rightWorld.handleSurfaceUpload,
       handleLabelUploadRight: rightWorld.handleLabelUpload,
       handleTCKUploadRight: rightWorld.handleTCKUpload,
@@ -300,6 +309,7 @@ export default {
       updateOpacityRight: rightWorld.updateOpacity,
       toggleViewModeRight: rightWorld.toggleViewMode,
       surfaceCheckRight: rightWorld.surfaceCheck,
+      showCorrespondingFibersRight: rightWorld.showCorrespondingFibers,
       // 添加下拉框的数据
       selectedSurfLeft,
       selectedParcLeft,
