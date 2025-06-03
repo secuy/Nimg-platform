@@ -3,6 +3,13 @@
 ## Introcution
 This is Nimg platform Web project source code.
 
+## Code Contribution
+If you want to contribute our platform. Please first run:
+```
+git pull
+```
+
+
 ## Project setup
 ```
 npm install
