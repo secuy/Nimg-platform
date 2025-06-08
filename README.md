@@ -1,7 +1,7 @@
 # Nimg_Analyse_Platform
 
 ## Introcution
-This is Nimg platform Web project source code. Nimgroup github link: https://github.com/NIMGroup
+This is NIMG platform Web project source code. NIMGroup github link: https://github.com/NIMGroup
 
 ## Code Contribution
 If you want to contribute our platform. Please first run:
