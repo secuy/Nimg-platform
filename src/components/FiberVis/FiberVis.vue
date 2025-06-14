@@ -4,6 +4,10 @@
       <div id="sidebar-header">
         <input type="file" ref="tckFile" accept=".tck" multiple @change="onTCKFileChange" />
         <div ref="layerPanel"></div>
+        <div style="margin-bottom: 8px;">
+          <label>Load GIFTI file (.gii):</label>
+          <input type="file" ref="giftiFile" accept=".gii" @change="onGIFTIFileChange" />
+        </div>
         <div id="tract-control-menu" style="margin-bottom:8px;">
           <label>Display mode:
             <select ref="tractControlMode" v-model="controlMode" @change="onControlModeChange">
@@ -33,7 +37,8 @@
         <!-- 属性上传和切换控件 -->
         <div id="attribute-panel" v-if="currentLayer && currentLayer.tracts && currentLayer.tracts.length">
           <div id="attr-upload-row">
-            <button id="add-attr-btn" @click="toggleAttrUpload">{{ attrUploadOpen ? 'Cancel' : 'Add Attribute (.txt)' }}</button>
+            <button id="add-attr-btn" @click="toggleAttrUpload">{{ attrUploadOpen ? 'Cancel' : 'Add Attribute (.txt)'
+            }}</button>
             <div id="attr-switcher" v-if="attributeNames.length">
               <label for="attr-select">Show attribute:</label>
               <select id="attr-select" v-model="currentAttrName" @change="onAttrSwitch">
@@ -67,6 +72,8 @@ import { animate } from './three/renderLoop.js';
 import { readTCK } from './utils/tckparser.js';
 import { showTractDetails } from './ui/details.js';
 import { setAttributes, getAttrNames, getAttrForTract, clearAttributes } from './ui/attributes.js';
+import { parseGIFTI, parseLabelGIFTI } from '../../utils/giftiParser';
+import * as THREE from 'three';
 
 // refs
 const tckFile = ref(null);
@@ -82,6 +89,8 @@ const tractSliderContainer = ref(null);
 const tractCountContainer = ref(null);
 const tractCountInput = ref(null);
 const threeCanvas = ref(null);
+const giftiFile = ref(null);
+const giftiMeshes = ref([]);
 
 // 响应式状态
 const layers = ref([]);
@@ -113,6 +122,49 @@ const COLORS = [
 ];
 function pickLayerColor(idx) {
   return COLORS[idx % COLORS.length];
+}
+
+function onGIFTIFileChange(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const name = file.name;
+  const isLabel = name.endsWith('.label.gii');
+  const reader = new FileReader();
+  reader.onload = async (event) => {
+    try {
+      if (isLabel) {
+        const labels = await parseLabelGIFTI(event.target.result);
+        alert('标签文件已解析，标签数：' + labels.length);
+      } else {
+        const geometry = await parseGIFTI(event.target.result, {
+          rotation: {
+            rotateX: -Math.PI / 2,
+            rotateY: 0,
+            rotateZ: Math.PI / 2
+          }
+        });
+        const material = new THREE.MeshPhongMaterial({
+          color: 0xcccccc,
+          transparent: true,
+          opacity: 1
+        });
+        const mesh = new THREE.Mesh(geometry, material);
+        import('./three/scene.js').then(mod => {
+          if (mod.addCustomMesh) {
+            mod.addCustomMesh(mesh);
+            if (mod.focusOnObject) {
+              mod.focusOnObject(mesh); // 自动聚焦到新 mesh
+            }
+          }
+        });
+        giftiMeshes.value.push({ name, mesh });
+        alert('GIFTI 表面已解析并添加到场景: ' + name);
+      }
+    } catch (err) {
+      alert('GIFTI 文件解析失败: ' + err.message);
+    }
+  };
+  reader.readAsText(file);
 }
 
 // UI handlers
