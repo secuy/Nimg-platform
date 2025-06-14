@@ -21,6 +21,7 @@ export function useCrossSpecies(containerRef, sharedState, side) {
   const tckInput = ref(null);
   const surfSysNames = ref([]);
   const parcSysNames = ref([]);
+  const isShowingFibers = ref(false);
   
   let scene = null;
   let camera = null;
@@ -642,6 +643,32 @@ export function useCrossSpecies(containerRef, sharedState, side) {
     }
   };
 
+  /**
+   * 显示皮层对应的纤维
+   */
+  const showCorrespondingFibers = () => {
+    if (!surfaceCheckTag.value || !currentMesh) return; // 只在皮层对齐模式下可用且有皮层
+
+    isShowingFibers.value = !isShowingFibers.value;
+    if (isShowingFibers.value) {
+      console.log(`开启 ${side} 画框皮层对应纤维显示`);
+      // TODO: 实现根据选中的顶点或标签过滤和显示纤维的逻辑
+      if (selectedVertex.value !== null) {
+        console.log(`选中的顶点索引: ${selectedVertex.value}`);
+      } else if (chooseLabel !== null) {
+        console.log(`选中的标签: ${chooseLabel}`);
+      }
+
+
+    } else {
+      console.log(`关闭 ${side} 画框皮层对应纤维显示`);
+      // TODO: 实现隐藏或移除过滤后的纤维的逻辑
+
+    }
+
+    needsRender = true;
+  };
+
   onMounted(() => {
     initThree();
     window.addEventListener('resize', handleResize);
@@ -702,6 +729,7 @@ export function useCrossSpecies(containerRef, sharedState, side) {
     viewMode,
     surfaceCheckTag,
     vertexInfo,
+    isShowingFibers,
     currentMesh,
     vertexLabels,
     labelColors,
@@ -721,6 +749,7 @@ export function useCrossSpecies(containerRef, sharedState, side) {
     flushChooseLabelOnSurf,
     loadGIFTIFileFromServer,
     loadLabelGIFTIFileFromServer,
-    loadTCKFileFromServer
+    loadTCKFileFromServer,
+    showCorrespondingFibers
   };
 } 
