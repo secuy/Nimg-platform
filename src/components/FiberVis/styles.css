@@ -133,3 +133,100 @@ body {
   background: #181818;
   display: block;
 }
+#attribute-panel {
+  margin: 12px 0 18px 0;
+  padding: 12px 8px;
+  background: #24292f;
+  border-radius: 7px;
+  border: 1px solid #333a;
+}
+
+#attr-upload-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px;
+  gap: 12px;
+}
+
+#add-attr-btn {
+  background: #2d8fff;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  font-size: 0.98em;
+  padding: 6px 12px;
+  cursor: pointer;
+  margin-right: 8px;
+}
+
+#add-attr-btn:hover {
+  background: #1565c0;
+}
+
+#attr-switcher {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+}
+
+#attr-upload-form {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: #21262d;
+  border-radius: 5px;
+  padding: 8px 10px;
+}
+
+#attr-upload-form label {
+  font-size: 0.98em;
+  color: #eee;
+  margin-bottom: 2px;
+}
+
+#attr-upload-form input[type="file"] {
+  background: #333;
+  color: #eee;
+  border: none;
+  border-radius: 3px;
+  font-size: 0.97em;
+}
+
+#attr-upload-form input[type="text"] {
+  padding: 2px 6px;
+  border-radius: 3px;
+  border: 1px solid #333;
+  font-size: 1em;
+  min-width: 100px;
+  background: #23272e;
+  color: #fff;
+}
+
+#attr-upload-form button[type="submit"] {
+  margin-top: 4px;
+  background: #37c;
+  color: #fff;
+  border: none;
+  border-radius: 3px;
+  padding: 5px 12px;
+  font-size: 0.97em;
+  cursor: pointer;
+}
+
+#attr-upload-form button[type="submit"]:hover {
+  background: #267;
+}
+
+.attr-upload-error {
+  color: #f44;
+  font-size: 0.95em;
+  margin-top: 2px;
+}
+
+.attr-upload-success {
+  color: #2ecb56;
+  font-size: 0.95em;
+  margin-top: 2px;
+}

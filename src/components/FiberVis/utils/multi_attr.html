@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TCK Viewer</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        #file-container {
+            margin: 20px 0;
+            padding: 20px;
+            border: 2px dashed #ccc;
+            border-radius: 5px;
+            text-align: center;
+        }
+        #visualizer {
+            margin-top: 20px;
+            display: none;
+        }
+        #header-info {
+            margin: 20px 0;
+            border: 1px solid #ddd;
+            padding: 15px;
+            border-radius: 5px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .header-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .header-table th, .header-table td {
+            text-align: left;
+            padding: 8px;
+            border-bottom: 1px solid #ddd;
+        }
+        .header-table th {
+            background-color: #f2f2f2;
+        }
+        #tract-info {
+            margin: 20px 0;
+        }
+        #tract-list {
+            height: 300px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .tract-item {
+            padding: 8px;
+            margin: 4px 0;
+            background-color: #f9f9f9;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        .tract-item:hover {
+            background-color: #eaeaea;
+        }
+        #tract-details {
+            margin-top: 20px;
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            padding: 15px;
+            border-radius: 5px;
+            background: #fff;
+        }
+        .coordinates-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .coordinates-table th, .coordinates-table td {
+            text-align: right;
+            padding: 5px;
+            border-bottom: 1px solid #eee;
+        }
+        .coordinates-table th {
+            background-color: #f2f2f2;
+        }
+        #loading {
+            display: none;
+            margin: 20px 0;
+            text-align: center;
+            color: #777;
+        }
+        #attribute-upload-container {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #e0e0e0;
+            border-radius: 5px;
+            background: #fdfdfd;
+        }
+        #attribute-upload-container label {
+            font-size: 1rem;
+            margin-right: 6px;
+        }
+        #attribute-upload-container input[type="file"] {
+            margin-bottom: 8px;
+        }
+        #attribute-upload-container .error {
+            color: #c00;
+            font-size: 0.95em;
+        }
+        #attribute-upload-container .success {
+            color: green;
+            font-size: 0.95em;
+        }
+        #attribute-switcher {
+            margin: 10px 0 6px 0;
+        }
+        @media (max-width: 600px) {
+            body { padding: 6px; }
+            #file-container, #header-info, #tract-details, #tract-list, #attribute-upload-container {
+                padding: 7px !important;
+                font-size: 0.98em;
+            }
+            .coordinates-table, .header-table { font-size:0.96em; }
+        }
+    </style>
+</head>
+<body>
+    <h1>TCK File Viewer</h1>
+    <p>Upload a .tck tractography file to view its contents</p>
+
+    <div id="file-container">
+        <input type="file" id="fileInput" accept=".tck">
+        <p>Or drop file here</p>
+    </div>
+
+    <div id="loading">
+        <p>Loading and processing file... This may take a moment for large files.</p>
+        <progress id="progress-bar" value="0" max="100"></progress>
+        <p id="progress-text">0%</p>
+    </div>
+
+    <div id="visualizer">
+        <h2>File Contents</h2>
+        <h3>Header Information</h3>
+        <div id="header-info"></div>
+
+        <h3>Tract Information</h3>
+        <div id="tract-info">
+            <p>Total tracts: <span id="tract-count">0</span></p>
+            <p>Select a tract to view its coordinates:</p>
+            <div id="tract-list"></div>
+        </div>
+
+        <div id="attribute-upload-container" style="display:none;">
+            <form id="attribute-upload-form" style="display:inline;">
+                <label for="attributeFileInput">Upload .txt attribute file for all tracts:</label>
+                <input type="file" id="attributeFileInput" accept=".txt">
+                <label for="attributeNameInput">Attribute name:</label>
+                <input type="text" id="attributeNameInput" placeholder="e.g. FA" style="width: 110px;">
+                <button type="submit" id="attributeUploadBtn">Upload</button>
+            </form>
+            <div id="attribute-upload-error" class="error"></div>
+            <div id="attribute-upload-success" class="success"></div>
+            <div id="attribute-switcher">
+                <label for="attributeSelect">Show attribute:</label>
+                <select id="attributeSelect" disabled>
+                    <option value="">(none)</option>
+                </select>
+            </div>
+        </div>
+
+        <div id="tract-details">
+            <h3>Tract Details</h3>
+            <p>Select a tract from the list to view details</p>
+        </div>
+    </div>
+
+    <script>
+        function readTCK(file, verbose = false, progressCallback = null) {
+          return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = function(event) {
+              try {
+                if (verbose) console.log('File loaded, processing data...');
+                const data = new Uint8Array(event.target.result);
+                // Extract header
+                let headerEnd = 0;
+                while (!(data[headerEnd] === 69 && data[headerEnd+1] === 78 && data[headerEnd+2] === 68)) { // "END" in ASCII
+                  headerEnd++;
+                }
+                const decoder = new TextDecoder("utf-8");
+                const headerRaw = decoder.decode(data.slice(0, headerEnd + 3)).split('\n');
+                // Parse header
+                const header = {};
+                const commandHistory = [];
+                for (const item of headerRaw) {
+                  if (item === 'END') {
+                    break;
+                  } else if (item.length > 12 && item.substring(0, 13) === 'mrtrix tracks') {
+                    header.first_line = 'mrtrix tracks';
+                  } else if (item.split(':')[0] === 'command_history') {
+                    commandHistory.push(item.split(':')[1].substring(1));
+                  } else if (item.includes(':')) {
+                    const [key, value] = item.split(':');
+                    header[key] = value.substring(1);
+                  }
+                }
+                header.command_history = commandHistory;
+                // Calculate file offset
+                let fileOffset = '';
+                for (const char of header.file) {
+                  if (!isNaN(parseInt(char))) {
+                    fileOffset += char;
+                  }
+                }
+                fileOffset = parseInt(fileOffset);
+                // Determine endianness and byte size
+                const endian = header.datatype.includes('LE') ? 'little' : 'big';
+                const byteSize = header.datatype.includes('32') ? 4 : 8;
+                let fileCount = 0;
+                if (header.count) {
+                  for (const char of header.count) {
+                    if (!isNaN(parseInt(char))) {
+                      fileCount += char;
+                    }
+                  }
+                  fileCount = parseInt(fileCount);
+                }
+                if (verbose) {
+                  console.log('Header reading complete, processing data...');
+                  console.log(`Data format: ${byteSize * 8}-bit ${endian}-endian`);
+                }
+                const dataView = new DataView(data.buffer);
+                const rawTracts = [];
+                let i = -1;
+                let infinities = 0;
+                let nans = 0;
+                let done = false;
+                let rawTract = [];
+                if (verbose) console.log('Starting tract extraction...');
+                while (!done) {
+                  i++;
+                  const offset = fileOffset + i * byteSize;
+                  if (offset + byteSize > data.length) break;
+                  let val;
+                  if (byteSize === 4) {
+                    val = dataView.getFloat32(offset, endian === 'little');
+                  } else {
+                    val = dataView.getFloat64(offset, endian === 'little');
+                  }
+                  if (!isFinite(val) && val > 0) { infinities++; }
+                  if (isNaN(val)) {
+                    nans++;
+                  } else {
+                    rawTract.push(val);
+                  }
+                  if (nans === 3) {
+                    nans = 0;
+                    rawTracts.push(rawTract);
+                    rawTract = [];
+                  }
+                  if (infinities === 3) {
+                    done = true;
+                  }
+                  if (i % 10000 === 1) {
+                    if (verbose) {
+                      console.log(`${Math.round((rawTracts.length / fileCount) * 100)}% of tracts extracted...`);
+                    }
+                    if (progressCallback && fileCount > 0) {
+                      const progress = Math.round((rawTracts.length / fileCount) * 100);
+                      progressCallback(progress);
+                    }
+                  }
+                }
+                if (verbose) {
+                  console.log(`Raw tracts extracted, counted ${rawTracts.length} tracts...`);
+                  console.log('Converting to correct format...');
+                }
+                // Format tracts as coordinate arrays
+                const tracts = [];
+                for (const tract of rawTracts) {
+                  const formattedTract = [];
+                  const vertices = Math.floor(tract.length / 3);
+                  for (let j = 0; j < vertices; j++) {
+                    const x = tract[j * 3];
+                    const y = tract[j * 3 + 1];
+                    const z = tract[j * 3 + 2];
+                    formattedTract.push([x, y, z]);
+                  }
+                  tracts.push(formattedTract);
+                }
+                if (verbose) console.log('File processing completed!');
+                resolve({ header, tracts });
+              } catch (error) {
+                reject(error);
+              }
+            };
+            reader.onerror = function() {
+              reject(new Error('Error reading file'));
+            };
+            reader.readAsArrayBuffer(file);
+          });
+        }
+
+        // --- DOM elements ---
+        const fileInput = document.getElementById('fileInput');
+        const fileContainer = document.getElementById('file-container');
+        const visualizer = document.getElementById('visualizer');
+        const headerInfo = document.getElementById('header-info');
+        const tractCount = document.getElementById('tract-count');
+        const tractList = document.getElementById('tract-list');
+        const tractDetails = document.getElementById('tract-details');
+        const loadingDiv = document.getElementById('loading');
+        const progressBar = document.getElementById('progress-bar');
+        const progressText = document.getElementById('progress-text');
+        const attributeUploadContainer = document.getElementById('attribute-upload-container');
+        const attributeUploadForm = document.getElementById('attribute-upload-form');
+        const attributeFileInput = document.getElementById('attributeFileInput');
+        const attributeNameInput = document.getElementById('attributeNameInput');
+        const attributeUploadBtn = document.getElementById('attributeUploadBtn');
+        const attributeUploadError = document.getElementById('attribute-upload-error');
+        const attributeUploadSuccess = document.getElementById('attribute-upload-success');
+        const attributeSelect = document.getElementById('attributeSelect');
+
+        // --- Global variables ---
+        let globalTractData = null;
+        let selectedTractIndex = null;
+        let attributeSets = {}; // { attrName: [ [values for tract0], [values for tract1], ... ] }
+        let currentAttributeName = null;
+
+        // --- UI helpers ---
+        function displayHeader(header) {
+            const table = document.createElement('table');
+            table.className = 'header-table';
+            const thead = document.createElement('thead');
+            const headerRow = document.createElement('tr');
+            const thKey = document.createElement('th');
+            thKey.textContent = 'Property';
+            const thValue = document.createElement('th');
+            thValue.textContent = 'Value';
+            headerRow.appendChild(thKey);
+            headerRow.appendChild(thValue);
+            thead.appendChild(headerRow);
+            table.appendChild(thead);
+            const tbody = document.createElement('tbody');
+            for (const [key, value] of Object.entries(header)) {
+                if (key === 'command_history') {
+                    const row = document.createElement('tr');
+                    const keyCell = document.createElement('td');
+                    keyCell.textContent = 'command_history';
+                    const valueCell = document.createElement('td');
+                    valueCell.textContent = value.join('\n');
+                    row.appendChild(keyCell);
+                    row.appendChild(valueCell);
+                    tbody.appendChild(row);
+                } else {
+                    const row = document.createElement('tr');
+                    const keyCell = document.createElement('td');
+                    keyCell.textContent = key;
+                    const valueCell = document.createElement('td');
+                    valueCell.textContent = value;
+                    row.appendChild(keyCell);
+                    row.appendChild(valueCell);
+                    tbody.appendChild(row);
+                }
+            }
+            table.appendChild(tbody);
+            headerInfo.innerHTML = '';
+            headerInfo.appendChild(table);
+        }
+
+        function displayTractList(tracts) {
+            tractCount.textContent = tracts.length;
+            tractList.innerHTML = '';
+            tracts.forEach((tract, index) => {
+                const tractItem = document.createElement('div');
+                tractItem.className = 'tract-item';
+                tractItem.textContent = `Tract #${index+1} (${tract.length} points)`;
+                tractItem.addEventListener('click', () => displayTractDetails(tract, index));
+                tractList.appendChild(tractItem);
+            });
+        }
+
+        function displayTractDetails(tract, index) {
+            tractDetails.innerHTML = '';
+            selectedTractIndex = index;
+
+            const title = document.createElement('h3');
+            title.textContent = `Tract #${index+1} Info`;
+
+            const info = document.createElement('p');
+            info.textContent = `Number of points: ${tract.length}`;
+
+            const table = document.createElement('table');
+            table.className = 'coordinates-table';
+            const thead = document.createElement('thead');
+            const headerRow = document.createElement('tr');
+
+            ['Point', 'X', 'Y', 'Z'].forEach(text => {
+                const th = document.createElement('th');
+                th.textContent = text;
+                headerRow.appendChild(th);
+            });
+
+            // Show Attribute column if attribute selected and available
+            let attributeValues = null;
+            if (currentAttributeName && attributeSets[currentAttributeName] && attributeSets[currentAttributeName][index]) {
+                const th = document.createElement('th');
+                th.textContent = currentAttributeName;
+                headerRow.appendChild(th);
+                attributeValues = attributeSets[currentAttributeName][index];
+            }
+
+            thead.appendChild(headerRow);
+            table.appendChild(thead);
+
+            // Display up to 100 points
+            const maxPoints = Math.min(tract.length, 100);
+            const tbody = document.createElement('tbody');
+            for (let i = 0; i < maxPoints; i++) {
+                const row = document.createElement('tr');
+                const pointCell = document.createElement('td');
+                pointCell.textContent = i + 1;
+                row.appendChild(pointCell);
+                for (let j = 0; j < 3; j++) {
+                    const coordCell = document.createElement('td');
+                    coordCell.textContent = tract[i][j].toFixed(2);
+                    row.appendChild(coordCell);
+                }
+                if (attributeValues) {
+                    const attrCell = document.createElement('td');
+                    if (typeof attributeValues[i] !== "undefined") {
+                        attrCell.textContent = attributeValues[i];
+                    } else {
+                        attrCell.textContent = '';
+                    }
+                    row.appendChild(attrCell);
+                }
+                tbody.appendChild(row);
+            }
+            table.appendChild(tbody);
+
+            if (tract.length > 100) {
+                const note = document.createElement('p');
+                note.textContent = `Note: Only showing first 100 of ${tract.length} points for performance reasons.`;
+                tractDetails.appendChild(note);
+            }
+
+            tractDetails.appendChild(title);
+            tractDetails.appendChild(info);
+            tractDetails.appendChild(table);
+        }
+
+        function updateProgress(progress) {
+            progressBar.value = progress;
+            progressText.textContent = `${progress}%`;
+        }
+
+        async function processFile(file) {
+            try {
+                loadingDiv.style.display = 'block';
+                visualizer.style.display = 'none';
+                selectedTractIndex = null;
+                attributeSets = {};
+                currentAttributeName = null;
+                attributeUploadContainer.style.display = 'none';
+                attributeUploadError.textContent = '';
+                attributeUploadSuccess.textContent = '';
+                updateAttributeSelect();
+                const { header, tracts } = await readTCK(file, true, updateProgress);
+                globalTractData = { header, tracts };
+                displayHeader(header);
+                displayTractList(tracts);
+
+                loadingDiv.style.display = 'none';
+                visualizer.style.display = 'block';
+                attributeUploadContainer.style.display = 'block';
+                tractDetails.innerHTML = '<h3>Tract Details</h3><p>Select a tract from the list to view details</p>';
+            } catch (error) {
+                console.error('Error processing TCK file:', error);
+                loadingDiv.style.display = 'none';
+                alert(`Error processing file: ${error.message}`);
+            }
+        }
+
+        fileInput.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (file) {
+                processFile(file);
+            }
+        });
+
+        fileContainer.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            fileContainer.style.backgroundColor = '#f0f0f0';
+        });
+        fileContainer.addEventListener('dragleave', () => {
+            fileContainer.style.backgroundColor = '';
+        });
+        fileContainer.addEventListener('drop', (e) => {
+            e.preventDefault();
+            fileContainer.style.backgroundColor = '';
+            const file = e.dataTransfer.files[0];
+            if (file) {
+                fileInput.files = e.dataTransfer.files;
+                processFile(file);
+            }
+        });
+
+        // Update the attribute dropdown and handle logic for enabling/disabling it
+        function updateAttributeSelect() {
+            const keys = Object.keys(attributeSets);
+            attributeSelect.innerHTML = '';
+            if (keys.length === 0) {
+                const opt = document.createElement('option');
+                opt.value = '';
+                opt.textContent = '(none)';
+                attributeSelect.appendChild(opt);
+                attributeSelect.disabled = true;
+                currentAttributeName = null;
+            } else {
+                attributeSelect.disabled = false;
+                keys.forEach(name => {
+                    const opt = document.createElement('option');
+                    opt.value = name;
+                    opt.textContent = name;
+                    attributeSelect.appendChild(opt);
+                });
+                // Always select the current attribute if possible, else pick first
+                if (!currentAttributeName || !attributeSets[currentAttributeName]) {
+                    currentAttributeName = keys[0];
+                }
+                attributeSelect.value = currentAttributeName;
+            }
+        }
+
+        // Handle attribute file upload form
+        attributeUploadForm.addEventListener('submit', function(event) {
+            event.preventDefault();
+            attributeUploadError.textContent = '';
+            attributeUploadSuccess.textContent = '';
+            if (!globalTractData || !globalTractData.tracts) {
+                attributeUploadError.textContent = 'Please upload a TCK file first.';
+                return;
+            }
+            const tracts = globalTractData.tracts;
+            if (!tracts || tracts.length === 0) {
+                attributeUploadError.textContent = 'No tracts loaded.';
+                return;
+            }
+            const file = attributeFileInput.files[0];
+            const attrName = attributeNameInput.value.trim();
+            if (!file) {
+                attributeUploadError.textContent = 'Please select an attribute .txt file.';
+                return;
+            }
+            if (!attrName) {
+                attributeUploadError.textContent = 'Please provide an attribute name.';
+                return;
+            }
+            if (!file.name.endsWith('.txt')) {
+                attributeUploadError.textContent = 'Please upload a .txt file.';
+                return;
+            }
+            // Read and process the attribute file
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const lines = e.target.result.split(/\r?\n/).filter(line => line.trim().length > 0 && !line.trim().startsWith('#'));
+                if (lines.length !== tracts.length) {
+                    attributeUploadError.textContent = `The attribute file has ${lines.length} lines but there are ${tracts.length} tracts. Each line should correspond to a tract.`;
+                    return;
+                }
+                // For each line, parse all values and check count
+                let attributes = [];
+                let error = false;
+                for (let i = 0; i < lines.length; i++) {
+                    // Remove inline comments and extra spaces
+                    let line = lines[i].split('#')[0].trim();
+                    if (line === "") line = " ";
+                    let vals = line.split(/\s+/).map(Number);
+                    if (vals.length !== tracts[i].length) {
+                        attributeUploadError.textContent = `Line ${i+1} in attribute file has ${vals.length} values, but tract #${i+1} has ${tracts[i].length} points.`;
+                        error = true;
+                        break;
+                    }
+                    attributes.push(vals);
+                }
+                if (!error) {
+                    attributeSets[attrName] = attributes;
+                    currentAttributeName = attrName;
+                    attributeUploadSuccess.textContent = `Attribute "${attrName}" loaded successfully!`;
+                    updateAttributeSelect();
+                    // If user is viewing a tract, update the table
+                    if (selectedTractIndex !== null)
+                        displayTractDetails(tracts[selectedTractIndex], selectedTractIndex);
+                }
+            };
+            reader.onerror = function() {
+                attributeUploadError.textContent = 'Error reading attribute file.';
+            };
+            reader.readAsText(file);
+        });
+
+        // Handle attribute type switching
+        attributeSelect.addEventListener('change', function() {
+            currentAttributeName = attributeSelect.value;
+            if (selectedTractIndex !== null && globalTractData && globalTractData.tracts) {
+                displayTractDetails(globalTractData.tracts[selectedTractIndex], selectedTractIndex);
+            }
+        });
+    </script>
+</body>
+</html>

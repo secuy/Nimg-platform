@@ -2,7 +2,7 @@
 
 import { getElement } from './elements.js';
 
-export function showTractDetails(index, tract) {
+export function showTractDetails(index, tract, opts = {}) {
   const tractDetails = getElement('tractDetails');
   if (!tractDetails) return;
   tractDetails.innerHTML = '';
@@ -17,15 +17,31 @@ export function showTractDetails(index, tract) {
   const maxPoints = Math.min(tract.length, 50);
   const table = document.createElement('table');
   table.style.fontSize = '0.92em';
-  table.innerHTML = `<tr><th>#</th><th>X</th><th>Y</th><th>Z</th></tr>`;
+
+  let head = `<tr><th>#</th><th>X</th><th>Y</th><th>Z</th>`;
+  let attrCol = false;
+  let attrVals = null;
+  if (opts && opts.attribute && typeof opts.getAttrForTract === 'function') {
+    attrVals = opts.getAttrForTract(opts.attribute, index);
+    if (attrVals) {
+      head += `<th>${opts.attribute}</th>`;
+      attrCol = true;
+    }
+  }
+  head += `</tr>`;
+  table.innerHTML = head;
   for (let i=0; i<maxPoints; i++) {
     const [x,y,z] = tract[i];
-    const row = document.createElement('tr');
-    row.innerHTML = `<td>${i+1}</td>
+    let row = `<td>${i + 1}</td>
         <td>${x.toFixed(2)}</td>
         <td>${y.toFixed(2)}</td>
         <td>${z.toFixed(2)}</td>`;
-    table.appendChild(row);
+    if (attrCol) {
+      row += `<td>${attrVals && typeof attrVals[i] !== 'undefined' ? attrVals[i] : ''}</td>`;
+    }
+    const tr = document.createElement('tr');
+    tr.innerHTML = row;
+    table.appendChild(tr);
   }
   tractDetails.appendChild(table);
   if (tract.length > 50) {

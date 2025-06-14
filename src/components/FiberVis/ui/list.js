@@ -1,6 +1,5 @@
 // src/components/FiberVis/ui/list.js
 
-// import { getElement } from './elements.js';
 import { addTractsToScene, highlightTract } from '../three/tracts.js';
 import { showTractDetails } from './details.js';
 
@@ -8,8 +7,8 @@ let loadedTracts = [];
 let isFolded = true;
 let renderedIndices = [];
 let currentLayerIndex = 0;
-
 let ui = {};
+let showTractDetailsFn = null;
 
 export function setupListUI(refs) {
   ui = {
@@ -18,6 +17,9 @@ export function setupListUI(refs) {
     foldBtn: refs.foldBtn.value,
     tractDetails: refs.tractDetails.value
   };
+  if (typeof refs.showTractDetails === 'function') {
+    showTractDetailsFn = refs.showTractDetails;
+  }
   if (ui.foldBtn) {
     ui.foldBtn.addEventListener('click', () => {
       setFolded(!isFolded);
@@ -32,7 +34,7 @@ export function setFolded(fold) {
   ui.foldBtn.textContent = isFolded ? "Show list" : "Hide list";
 }
 
-export function loadTractList(tracts, ratio = 0.1, count = undefined, color = 0x00ffe5, layerIndex = 0) {
+export function loadTractList(tracts, ratio = 0.1, count = undefined, color = 0x00ffe5, layerIndex = 0, opts = {}) {
   loadedTracts = tracts;
   currentLayerIndex = layerIndex;
   if (!ui.tractList || !ui.tractCount) return;
@@ -52,12 +54,12 @@ export function loadTractList(tracts, ratio = 0.1, count = undefined, color = 0x
     const tract = tracts[i];
     const div = document.createElement('div');
     div.textContent = `Tract #${i+1} (${tract.length} pts)`;
-    div.onclick = () => selectTract(i);
+    div.onclick = () => selectTract(i, opts);
     ui.tractList.appendChild(div);
   });
   const threeObjects = addTractsToScene(renderedIndices.map(i => tracts[i]), color, layerIndex);
   if (window.layers) window.layers[layerIndex].threeObjects = threeObjects;
-  selectTract(renderedIndices[0] ?? 0);
+  selectTract(renderedIndices[0] ?? 0, opts);
 }
 
 export function clearTractList() {
@@ -68,7 +70,7 @@ export function clearTractList() {
   renderedIndices = [];
 }
 
-function selectTract(idx) {
+function selectTract(idx, opts = {}) {
   const localIdx = renderedIndices.indexOf(idx);
   if (!ui.tractList) return;
   [...ui.tractList.children].forEach((div, i) => {
@@ -76,6 +78,10 @@ function selectTract(idx) {
   });
   highlightTract(localIdx, currentLayerIndex);
   if (loadedTracts[idx]) {
-    showTractDetails(idx, loadedTracts[idx]);
+    if (showTractDetailsFn) {
+      showTractDetailsFn(idx, loadedTracts[idx], opts);
+    } else {
+      showTractDetails(idx, loadedTracts[idx]);
+    }
   }
 }
